@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -269,74 +268,5 @@
     }
 
     </script>
-=======
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Waifinity - Waifus Photos API</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4 relative">
-  <h1 class="text-3xl font-bold mb-6">🎴 Waifinity - Waifus Photos API</h1>
-
-  <div id="waifus" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8"></div>
-
-  <!-- Botão flutuante -->
-  <button onclick="sortearWaifus()" title="Sortear Novas Waifus"
-    class="fixed bottom-6 right-6 bg-pink-600 hover:bg-pink-700 text-white text-3xl p-4 rounded-full shadow-lg z-50 transition transform hover:scale-110">
-    🔄
-  </button>
-
-  <script>
-  const categorias = ["geral", "beach", "kitsune", "maid", "demon", "gothic", "cyberpunk"]; // defina todas existentes
-  const totalImagens = 10;
-
-  const waifusContainer = document.getElementById("waifus");
-
-  // Gera uma combinação aleatória única de {categoria}/{imagem}
-  async function getUniqueWaifu(existingSet) {
-    let tentativa = 0;
-    while (tentativa < 100) {
-      const cat = categorias[Math.floor(Math.random() * categorias.length)];
-      const id = Math.floor(Math.random() * totalImagens) + 1;
-      const imgNum = String(id).padStart(2, '0');
-      const key = `${cat}/${imgNum}`;
-
-      if (!existingSet.has(key)) {
-        const url = `https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/${key}.png`;
-
-        try {
-          const res = await fetch(url, { method: 'HEAD' });
-          if (res.ok) {
-            existingSet.add(key);
-            return url;
-          }
-        } catch {}
-      }
-      tentativa++;
-    }
-    return null;
-  }
-
-  async function sortearWaifus() {
-    waifusContainer.innerHTML = '';
-    const sorteadas = new Set();
-    const imagens = [];
-
-    while (imagens.length < 6) {
-      const url = await getUniqueWaifu(sorteadas);
-      if (url) imagens.push(url);
-    }
-
-    imagens.forEach(url => {
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "Waifu aleatória";
-      img.className = "rounded-xl shadow-lg transition duration-300 transform hover:scale-105";
-      waifusContainer.appendChild(img);
-    });
-  }
-
-  window.onload = sortearWaifus;
-</script>
 </body>
 </html>
