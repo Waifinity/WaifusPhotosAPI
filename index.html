@@ -1,75 +1,272 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Waifinity - Waifus Photos API</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Waifinity - Waifus Photos API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ec4899;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #waifus {
+            column-count: 1;
+            column-gap: 24px;
+            max-width: 72rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0 16px;
+            margin-bottom: 3rem;
+        }
+
+        @media (min-width: 640px) {
+            #waifus {
+                column-count: 2;
+            }
+        }
+        @media (min-width: 1024px) {
+            #waifus {
+                column-count: 3;
+            }
+        }
+
+        .waifu-card {
+            break-inside: avoid; 
+            margin-bottom: 24px; 
+            
+            background-color: #1f2937;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            
+            display: inline-block; 
+            width: 100%;
+        }
+        .waifu-card:hover {
+            transform: perspective(1000px) rotateY(10deg) scale(1.03);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .waifu-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s;
+        }
+        .waifu-card img:hover {
+            transform: scale(1.1); 
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4 relative">
-  <h1 class="text-3xl font-bold mb-6">🎴 Waifinity - Waifus Photos API</h1>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-4 relative overflow-x-hidden">
+    <div id="splashScreen" class="splash-screen">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 animate__animated animate__fadeIn">
+                Waifinity API
+            </h1>
+            <p class="text-xl text-gray-300 mb-8 animate__animated animate__fadeIn animate__delay-1s">
+                Carregando demonstração...
+            </p>
+            <div class="loader animate__animated animate__fadeIn animate__delay-1s"></div>
+        </div>
+    </div>
 
-  <div id="waifus" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8"></div>
+    <div id="mainContent" class="hidden w-full max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
+                🎴 Waifinity API
+            </h1>
+            <p class="text-lg text-gray-300 max-w-2xl mx-auto">
+                Demonstração da API de fotos de waifus.
+            </p>
+        </header>
 
-  <!-- Botão flutuante -->
-  <button onclick="sortearWaifus()" title="Sortear Novas Waifus"
-    class="fixed bottom-6 right-6 bg-pink-600 hover:bg-pink-700 text-white text-3xl p-4 rounded-full shadow-lg z-50 transition transform hover:scale-110">
-    🔄
-  </button>
+        <div id="waifus"></div>
 
-  <script>
-  const categorias = ["geral", "beach", "kitsune", "maid", "demon", "gothic", "cyberpunk"]; // defina todas existentes
-  const totalImagens = 10;
+        <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-40">
+            <div class="text-center">
+                <div class="loader mx-auto mb-4"></div>
+                <p class="text-xl text-white">Carregando waifus...</p>
+            </div>
+        </div>
 
-  const waifusContainer = document.getElementById("waifus");
+        <div id="errorModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-xl p-6 max-w-md mx-4">
+                <div class="text-red-500 text-5xl mb-4">⚠️</div>
+                <h2 class="text-2xl font-bold mb-2">Ocorreu um erro</h2>
+                <p id="errorMessage" class="text-gray-300 mb-4">Não foi possível carregar as imagens. Por favor, verifique sua conexão e tente novamente.</p>
+                <button onclick="document.getElementById('errorModal').classList.add('hidden')" 
+                    class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
 
-  // Gera uma combinação aleatória única de {categoria}/{imagem}
-  async function getUniqueWaifu(existingSet) {
-    let tentativa = 0;
-    while (tentativa < 100) {
-      const cat = categorias[Math.floor(Math.random() * categorias.length)];
-      const id = Math.floor(Math.random() * totalImagens) + 1;
-      const imgNum = String(id).padStart(2, '0');
-      const key = `${cat}/${imgNum}`;
+        <button onclick="sortearWaifus()" title="Sortear Novas Waifus"
+            class="fixed bottom-6 right-6 bg-gradient-to-br from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white text-3xl p-4 rounded-full shadow-xl z-30 transition-all duration-300 transform hover:scale-110 hover:shadow-2xl active:scale-95">
+            <span id="buttonIcon">🔄</span>
+        </button>
 
-      if (!existingSet.has(key)) {
-        const url = `https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/${key}.png`;
+        <footer class="mt-12 text-center text-gray-400 text-sm w-full py-4 border-t border-gray-800">
+            <p>Feito com ❤️ pela equipe do projeto Waifinity</p>
+            <p class="mt-1">
+                <a href="https://github.com/Waifinity/WaifusPhotosAPI/tree/main" target="_blank" 
+                    class="text-pink-500 hover:text-pink-400 transition underline">
+                    Acesse nosso repositório no GitHub
+                </a>
+            </p>
+        </footer>
+    </div>
 
+    <script>
+    const categorias = ["geral", "beach", "kitsune", "maid", "demon", "gothic", "cyberpunk"];
+    const totalImagens = 10;
+    const waifusContainer = document.getElementById("waifus");
+    let isFirstLoad = true;
+
+    setTimeout(() => {
+        document.getElementById('splashScreen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('splashScreen').style.display = 'none';
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('animate__animated', 'animate__fadeIn');
+            
+            sortearWaifus();
+        }, 500);
+    }, 2000);
+
+    async function getUniqueWaifu(existingSet) {
+        let tentativa = 0;
+        const maxTentativas = 100;
+        while (tentativa < maxTentativas) {
+            const cat = categorias[Math.floor(Math.random() * categorias.length)];
+            const id = Math.floor(Math.random() * totalImagens) + 1; 
+            const imgNum = String(id).padStart(2, '0'); 
+            const key = `${cat}/${imgNum}`;
+
+            if (!existingSet.has(key)) {
+                const url = `https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/${key}.png`;
+
+                try {
+                    const res = await fetch(url, { method: 'HEAD' });
+                    if (res.ok) {
+                        existingSet.add(key);
+                        return { url, category: cat };
+                    }
+                } catch (error) {
+                    console.error(`Erro ao verificar imagem ${url}:`, error);
+                }
+            }
+            tentativa++;
+        }
+        console.warn(`Não foi possível encontrar uma waifu única após ${maxTentativas} tentativas.`);
+        return null;
+    }
+
+    async function sortearWaifus() {
         try {
-          const res = await fetch(url, { method: 'HEAD' });
-          if (res.ok) {
-            existingSet.add(key);
-            return url;
-          }
-        } catch {}
-      }
-      tentativa++;
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            const buttonIcon = document.getElementById('buttonIcon');
+            buttonIcon.textContent = '⏳';
+            
+            waifusContainer.innerHTML = '';
+
+            for (let i = 0; i < 6; i++) {
+                const skeleton = document.createElement("div");
+                skeleton.className = "waifu-card bg-gray-800 rounded-xl h-64 animate-pulse"; 
+                waifusContainer.appendChild(skeleton);
+            }
+
+            const sorteadas = new Set();
+            const imagens = [];
+
+            while (imagens.length < 6) {
+                const waifu = await getUniqueWaifu(sorteadas);
+                if (waifu) imagens.push(waifu);
+            }
+
+            waifusContainer.innerHTML = '';
+            
+            imagens.forEach((waifu, index) => {
+                const card = document.createElement("div");
+                card.className = "waifu-card fade-in"; 
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                const imgContainer = document.createElement("div");
+                imgContainer.className = "relative overflow-hidden";
+                
+                const img = document.createElement("img");
+                img.src = waifu.url;
+                img.alt = `Waifu ${waifu.category}`;
+                img.className = "w-full h-auto object-cover"; 
+                img.loading = isFirstLoad && index > 2 ? "lazy" : "eager"; 
+                
+                const categoryBadge = document.createElement("div");
+                categoryBadge.className = "absolute bottom-2 left-2 bg-black bg-opacity-70 text-xs px-2 py-1 rounded";
+                categoryBadge.textContent = waifu.category;
+                
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(categoryBadge);
+                card.appendChild(imgContainer);
+                waifusContainer.appendChild(card);
+            });
+
+            isFirstLoad = false;
+        } catch (error) {
+            console.error('Erro ao carregar waifus:', error);
+            showError('Ocorreu um erro ao carregar as imagens. Por favor, verifique sua conexão e tente novamente.');
+        } finally {
+            document.getElementById('loadingIndicator').classList.add('hidden');
+            buttonIcon.textContent = '🔄'; 
+        }
     }
-    return null;
-  }
 
-  async function sortearWaifus() {
-    waifusContainer.innerHTML = '';
-    const sorteadas = new Set();
-    const imagens = [];
-
-    while (imagens.length < 6) {
-      const url = await getUniqueWaifu(sorteadas);
-      if (url) imagens.push(url);
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorModal').classList.remove('hidden');
     }
 
-    imagens.forEach(url => {
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "Waifu aleatória";
-      img.className = "rounded-xl shadow-lg transition duration-300 transform hover:scale-105";
-      waifusContainer.appendChild(img);
-    });
-  }
-
-  window.onload = sortearWaifus;
-</script>
-
+    </script>
 </body>
 </html>
