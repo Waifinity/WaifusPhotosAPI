@@ -143,7 +143,7 @@
             </div>
         </div>
 
-        <button onclick="sortearWaifus()" title="Sortear Novas Waifus"
+        <button onclick="exibirWaifusAleatorios()" title="Sortear Novas Waifus"
             class="fixed bottom-6 right-6 bg-gradient-to-br from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white text-3xl p-4 rounded-full shadow-xl z-30 transition-all duration-300 transform hover:scale-110 hover:shadow-2xl active:scale-95">
             <span id="buttonIcon">🔄</span>
         </button>
@@ -160,113 +160,148 @@
     </div>
 
     <script>
-    const categorias = ["geral", "beach", "kitsune", "maid", "demon", "gothic", "cyberpunk"];
-    const totalImagens = 10;
-    const waifusContainer = document.getElementById("waifus");
-    let isFirstLoad = true;
+const jsonUrl = "https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/waifus.json";
+const waifusContainer = document.getElementById("waifus");
+const categoriasSet = new Set();
+const raridadesSet = new Set();
+let waifusData = {};
 
+const filtrosContainer = document.createElement("div");
+filtrosContainer.className = "flex flex-wrap justify-center gap-4 mb-6";
+document.getElementById("mainContent").insertBefore(filtrosContainer, waifusContainer);
+
+const selectCategoria = document.createElement("select");
+selectCategoria.className = "bg-gray-700 text-white px-4 py-2 rounded-lg";
+selectCategoria.innerHTML = `<option value="">Todas as categorias</option>`;
+
+const selectRaridade = document.createElement("select");
+selectRaridade.className = "bg-gray-700 text-white px-4 py-2 rounded-lg";
+selectRaridade.innerHTML = `<option value="">Todas as raridades</option>`;
+
+filtrosContainer.appendChild(selectCategoria);
+filtrosContainer.appendChild(selectRaridade);
+
+selectCategoria.onchange = filtrarWaifus;
+selectRaridade.onchange = filtrarWaifus;
+
+setTimeout(() => {
+    document.getElementById('splashScreen').style.opacity = '0';
     setTimeout(() => {
-        document.getElementById('splashScreen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('splashScreen').style.display = 'none';
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('mainContent').classList.add('animate__animated', 'animate__fadeIn');
-            
-            sortearWaifus();
-        }, 500);
-    }, 2000);
+        document.getElementById('splashScreen').style.display = 'none';
+        document.getElementById('mainContent').classList.remove('hidden');
+        document.getElementById('mainContent').classList.add('animate__animated', 'animate__fadeIn');
+        carregarWaifus();
+    }, 500);
+}, 2000);
 
-    async function getUniqueWaifu(existingSet) {
-        let tentativa = 0;
-        const maxTentativas = 100;
-        while (tentativa < maxTentativas) {
-            const cat = categorias[Math.floor(Math.random() * categorias.length)];
-            const id = Math.floor(Math.random() * totalImagens) + 1; 
-            const imgNum = String(id).padStart(2, '0'); 
-            const key = `${cat}/${imgNum}`;
+async function carregarWaifus() {
+    document.getElementById('loadingIndicator').classList.remove('hidden');
+    try {
+        const res = await fetch(jsonUrl);
+        waifusData = await res.json();
+        categoriasSet.clear();
+        raridadesSet.clear();
 
-            if (!existingSet.has(key)) {
-                const url = `https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/${key}.png`;
+        Object.entries(waifusData).forEach(([categoria, waifus]) => {
+            categoriasSet.add(categoria);
+            waifus.forEach(w => raridadesSet.add(w.raridade));
+        });
 
-                try {
-                    const res = await fetch(url, { method: 'HEAD' });
-                    if (res.ok) {
-                        existingSet.add(key);
-                        return { url, category: cat };
-                    }
-                } catch (error) {
-                    console.error(`Erro ao verificar imagem ${url}:`, error);
-                }
-            }
-            tentativa++;
-        }
-        console.warn(`Não foi possível encontrar uma waifu única após ${maxTentativas} tentativas.`);
-        return null;
+        atualizarDropdowns();
+        exibirWaifusAleatorios();
+    } catch (err) {
+        showError("Erro ao carregar o JSON de waifus.");
+        console.error(err);
+    } finally {
+        document.getElementById('loadingIndicator').classList.add('hidden');
+    }
+}
+
+function atualizarDropdowns() {
+    categoriasSet.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c.charAt(0).toUpperCase() + c.slice(1);
+        selectCategoria.appendChild(opt);
+    });
+    raridadesSet.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r;
+        opt.textContent = r;
+        selectRaridade.appendChild(opt);
+    });
+}
+
+function filtrarWaifus() {
+    const categoria = selectCategoria.value;
+    const raridade = selectRaridade.value;
+    const lista = [];
+
+    Object.entries(waifusData).forEach(([cat, waifus]) => {
+        if (categoria && cat !== categoria) return;
+        waifus.forEach(w => {
+            if (raridade && w.raridade !== raridade) return;
+            lista.push({ ...w, categoria: cat });
+        });
+    });
+
+    exibirWaifus(lista.length > 0 ? lista.slice(0, 12) : []);
+}
+
+function exibirWaifusAleatorios() {
+    const todas = [];
+
+    Object.entries(waifusData).forEach(([cat, waifus]) => {
+        waifus.forEach(w => {
+            todas.push({ ...w, categoria: cat });
+        });
+    });
+
+    todas.sort(() => 0.5 - Math.random());
+    exibirWaifus(todas.slice(0, 12));
+}
+
+function exibirWaifus(lista) {
+    waifusContainer.innerHTML = '';
+    if (!lista.length) {
+        waifusContainer.innerHTML = '<p class="text-center w-full text-gray-400">Nenhuma waifu encontrada com os filtros selecionados.</p>';
+        return;
     }
 
-    async function sortearWaifus() {
-        try {
-            document.getElementById('loadingIndicator').classList.remove('hidden');
-            const buttonIcon = document.getElementById('buttonIcon');
-            buttonIcon.textContent = '⏳';
-            
-            waifusContainer.innerHTML = '';
+    lista.forEach((waifu, index) => {
+        const card = document.createElement("div");
+        card.className = "waifu-card fade-in";
+        card.style.animationDelay = `${index * 0.1}s`;
 
-            for (let i = 0; i < 6; i++) {
-                const skeleton = document.createElement("div");
-                skeleton.className = "waifu-card bg-gray-800 rounded-xl h-64 animate-pulse"; 
-                waifusContainer.appendChild(skeleton);
-            }
+        const imgContainer = document.createElement("div");
+        imgContainer.className = "relative";
 
-            const sorteadas = new Set();
-            const imagens = [];
+        const img = document.createElement("img");
+        img.src = waifu.url;
+        img.alt = waifu.nome || "Waifu";
+        img.className = "w-full h-auto object-cover";
 
-            while (imagens.length < 6) {
-                const waifu = await getUniqueWaifu(sorteadas);
-                if (waifu) imagens.push(waifu);
-            }
+        const badgeCategoria = document.createElement("div");
+        badgeCategoria.className = "absolute top-2 left-2 bg-pink-600 text-xs px-2 py-1 rounded";
+        badgeCategoria.textContent = waifu.categoria;
 
-            waifusContainer.innerHTML = '';
-            
-            imagens.forEach((waifu, index) => {
-                const card = document.createElement("div");
-                card.className = "waifu-card fade-in"; 
-                card.style.animationDelay = `${index * 0.1}s`;
-                
-                const imgContainer = document.createElement("div");
-                imgContainer.className = "relative overflow-hidden";
-                
-                const img = document.createElement("img");
-                img.src = waifu.url;
-                img.alt = `Waifu ${waifu.category}`;
-                img.className = "w-full h-auto object-cover"; 
-                img.loading = isFirstLoad && index > 2 ? "lazy" : "eager"; 
-                
-                const categoryBadge = document.createElement("div");
-                categoryBadge.className = "absolute bottom-2 left-2 bg-black bg-opacity-70 text-xs px-2 py-1 rounded";
-                categoryBadge.textContent = waifu.category;
-                
-                imgContainer.appendChild(img);
-                imgContainer.appendChild(categoryBadge);
-                card.appendChild(imgContainer);
-                waifusContainer.appendChild(card);
-            });
+        const badgeRaridade = document.createElement("div");
+        badgeRaridade.className = "absolute top-2 right-2 bg-purple-600 text-xs px-2 py-1 rounded";
+        badgeRaridade.textContent = waifu.raridade;
 
-            isFirstLoad = false;
-        } catch (error) {
-            console.error('Erro ao carregar waifus:', error);
-            showError('Ocorreu um erro ao carregar as imagens. Por favor, verifique sua conexão e tente novamente.');
-        } finally {
-            document.getElementById('loadingIndicator').classList.add('hidden');
-            buttonIcon.textContent = '🔄'; 
-        }
-    }
+        imgContainer.appendChild(img);
+        imgContainer.appendChild(badgeCategoria);
+        imgContainer.appendChild(badgeRaridade);
+        card.appendChild(imgContainer);
+        waifusContainer.appendChild(card);
+    });
+}
 
-    function showError(message) {
-        document.getElementById('errorMessage').textContent = message;
-        document.getElementById('errorModal').classList.remove('hidden');
-    }
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').classList.remove('hidden');
+}
+</script>
 
-    </script>
 </body>
 </html>
