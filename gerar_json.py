@@ -8,9 +8,9 @@ REPO_NAME = "WaifusPhotosAPI"
 IMAGES_DIR = "images"
 JSON_FILE = "waifus.json"
 
-RARIDADES_POSSIVEIS = ["N", "R", "SR", "SSR"]
+RARIDADES_POSSIVEIS = ["comum", "incomum", "rara", "SR", "SSR"]
 
-# Tenta carregar o JSON antigo para manter raridades
+# Tenta carregar o JSON antigo para manter raridades existentes
 if os.path.exists(JSON_FILE):
     with open(JSON_FILE, "r", encoding="utf-8") as f:
         waifus_data = json.load(f)
