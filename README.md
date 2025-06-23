@@ -7,92 +7,87 @@
 
 ## 🚀 Visão Geral
 
-Esta é uma API baseada em repositório GitHub + CDN da [jsDelivr](https://www.jsdelivr.com/), com imagens organizadas por categorias.  
-Ela serve **imagens diretamente** por URL, sem necessidade de autenticação ou backend.
+Esta API é baseada em um repositório GitHub com imagens organizadas por **categorias** e acompanhada por um arquivo `waifus.json` que mapeia todas as waifus disponíveis, incluindo sua **raridade** e rota completa.
+
+Ela pode ser consumida por qualquer projeto, **sem necessidade de autenticação**, via [jsDelivr CDN](https://www.jsdelivr.com/).
 
 ---
 
-## 🌐 Rota base da API
+## 🌐 Rotas base da API
 
-A rota base para as imagens é:
-
+### Imagens individuais:
 ```
-https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/
+https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/images/{categoria}/{imagem}.png
+```
+
+### JSON com mapeamento completo:
+```
+https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/waifus.json
 ```
 
 ---
 
 ## 📁 Estrutura de diretórios
 
-As imagens estão organizadas por **categorias**.  
-Exemplo de categorias atuais:
+As imagens estão dentro de `/images/` e organizadas por categoria:
 
 ```
-/geral
-/demon
-/maid
-/gothic
-/cyberpunk
+/images
+  ├── geral/
+  ├── maid/
+  ├── demon/
+  ├── cyberpunk/
+  └── gothic/
 ```
 
-Cada categoria contém imagens em formato `.png` numeradas:
-
-```
-/geral/01.png
-/geral/02.png
-/maid/01.png
-```
-
----
-
-## ✅ Exemplo de uso direto
-
-Você pode usar qualquer imagem diretamente com HTML:
-
-```html
-<img src="https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/geral/01.png" alt="Waifu" />
-```
-
----
-
-## 🧠 Como fazer requisições com JavaScript
-
-### 🔁 Puxando uma imagem aleatória de uma categoria:
-
-```js
-const totalImagens = 10; // número de imagens disponíveis na categoria
-const randomId = Math.floor(Math.random() * totalImagens) + 1;
-const categoria = "geral";
-const imageUrl = `https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/${categoria}/${String(randomId).padStart(2, '0')}.png`;
-
-document.getElementById("waifu").src = imageUrl;
-```
-
-### HTML correspondente:
-```html
-<img id="waifu" alt="Sua waifu aleatória aparecerá aqui" />
-```
-
----
-
-## 📦 Requisições dinâmicas (opcional)
-
-Caso queira criar uma **API personalizada em JSON**, você pode criar um arquivo `waifus.json` contendo:
+O arquivo `waifus.json` contém a estrutura assim:
 
 ```json
 {
-  "waifus": [
+  "maid": [
     {
-      "nome": "Yumi",
-      "categoria": "maid",
-      "image": "https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/maid/01.png",
+      "nome": "01.png",
+      "url": "https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/images/maid/01.png",
       "raridade": "SR"
     }
   ]
 }
 ```
 
-Isso facilita filtros por raridade ou nome.
+---
+
+## ✅ Como consumir a API com JavaScript
+
+### 🔁 Puxar uma waifu aleatória de qualquer categoria com segurança:
+
+```js
+async function getWaifu(categoria = "maid") {
+  const res = await fetch("https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/waifus.json");
+  const data = await res.json();
+  const lista = data[categoria];
+  const index = Math.floor(Math.random() * lista.length);
+  return lista[index]; // Objeto com nome, url e raridade
+}
+```
+
+---
+
+## 🎨 Visualizador com filtros
+
+Você pode usar este painel para visualizar todas as waifus da API por **categoria e raridade**:
+
+🔗 [Acesse o visualizador (versão HTML)](https://seurepo.github.io/waifinity-viewer) *(link fictício – substitua pelo real se for usar GitHub Pages)*
+
+Ou use o código base pronto neste repositório para criar seu próprio painel.
+
+---
+
+## 📦 Recursos do JSON
+
+O `waifus.json` é atualizado automaticamente por um script Python (`gerar_json.py`) que:
+- Varre as pastas de imagens
+- Atribui raridade aleatória (sem sobrescrever dados existentes)
+- Garante compatibilidade total com o frontend
 
 ---
 
@@ -101,7 +96,7 @@ Isso facilita filtros por raridade ou nome.
 - ✅ **Uso público e gratuito permitido**
 - ❌ **Proibido uso comercial ou monetização direta**
 - ❌ **Proibida revenda, reupload ou uso das imagens como conteúdo premium**
-- ✅ Pode ser usada em projetos educacionais, jogos pessoais e bots
+- ✅ Permitido em jogos, bots e projetos educacionais
 - 📢 Atribuição opcional, mas bem-vinda: [@Waifinity](https://github.com/Waifinity)
 
 ---
@@ -113,10 +108,16 @@ Crie um fork, envie um pull request ou abra uma issue.
 
 ---
 
-## ✨ Exemplo de rota funcional
+## ✨ Exemplo de rotas
 
+Imagem individual:
 ```
-https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/geral/01.png
+https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/images/geral/01.png
+```
+
+JSON completo:
+```
+https://cdn.jsdelivr.net/gh/Waifinity/WaifusPhotosAPI/waifus.json
 ```
 
 ---
