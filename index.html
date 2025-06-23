@@ -227,7 +227,7 @@ function atualizarDropdowns() {
     raridadesSet.forEach(r => {
         const opt = document.createElement("option");
         opt.value = r;
-        opt.textContent = r;
+        opt.textContent = r.charAt(0).toUpperCase() + r.slice(1);
         selectRaridade.appendChild(opt);
     });
 }
