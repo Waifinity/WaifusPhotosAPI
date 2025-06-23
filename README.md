@@ -76,7 +76,7 @@ async function getWaifu(categoria = "maid") {
 
 Você pode usar este painel para visualizar todas as waifus da API por **categoria e raridade**:
 
-🔗 [Acesse o visualizador (versão HTML)]([https://seurepo.github.io/waifinity-viewer](https://waifinity.github.io/WaifusPhotosAPI/))
+🔗 [Acesse o visualizador (versão HTML)](https://waifinity.github.io/WaifusPhotosAPI/)
 
 Ou use o código base pronto neste repositório para criar seu próprio painel.
 
